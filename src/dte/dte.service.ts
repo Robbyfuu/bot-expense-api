@@ -30,48 +30,62 @@ export class DteService {
   }
 
   async decode(imageBuffer: Buffer): Promise<DteData | null> {
-    try {
-      this.logger.debug('Attempting to decode PDF417 from image...');
+    const rotations = [0, 90, 270];
 
-      // Preprocess image with sharp
-      const { data, info } = await sharp(imageBuffer)
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
+    for (const angle of rotations) {
+      try {
+        this.logger.debug(
+          `Attempting to decode PDF417 with rotation ${angle}°...`,
+        );
 
-      const luminanceSource = new RGBLuminanceSource(
-        new Uint8ClampedArray(data.buffer),
-        info.width,
-        info.height,
-      );
+        // Preprocess image with sharp
+        const pipeline = sharp(imageBuffer);
 
-      const binaryBitmap = new BinaryBitmap(
-        new HybridBinarizer(luminanceSource),
-      );
-      const reader = new MultiFormatReader();
-      reader.setHints(this.hints);
+        if (angle !== 0) {
+          pipeline.rotate(angle);
+        }
 
-      const result = reader.decode(binaryBitmap);
-      const text = result.getText();
+        const { data, info } = await pipeline
+          .ensureAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
 
-      if (text) {
-        this.logger.log('PDF417 decoded successfully');
-        return this.parseTed(text);
+        const luminanceSource = new RGBLuminanceSource(
+          new Uint8ClampedArray(data.buffer),
+          info.width,
+          info.height,
+        );
+
+        const binaryBitmap = new BinaryBitmap(
+          new HybridBinarizer(luminanceSource),
+        );
+        const reader = new MultiFormatReader();
+        reader.setHints(this.hints);
+
+        const result = reader.decode(binaryBitmap);
+        const text = result.getText();
+
+        if (text) {
+          this.logger.log(`PDF417 decoded successfully at ${angle}°`);
+          return this.parseTed(text);
+        }
+      } catch (e) {
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+        const error = e as any;
+        if (
+          error?.name === 'NotFoundException' ||
+          error?.name === 'ChecksumException' ||
+          error?.name === 'FormatException'
+        ) {
+          this.logger.debug(`No PDF417 found at ${angle}°`);
+        } else {
+          this.logger.error(`Error decoding PDF417 at ${angle}°`, error);
+        }
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
       }
-    } catch (e) {
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-      const error = e;
-      if (
-        error?.name === 'NotFoundException' ||
-        error?.name === 'ChecksumException' ||
-        error?.name === 'FormatException'
-      ) {
-        this.logger.debug('No PDF417 found in image');
-      } else {
-        this.logger.error('Error decoding PDF417', error);
-      }
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     }
+
+    this.logger.debug('Failed to decode PDF417 in all attempts');
     return null;
   }
 
