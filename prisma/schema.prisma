@@ -44,6 +44,17 @@ model CreditCard {
   updatedAt   DateTime  @updatedAt
 }
 
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  icon      String?  // Emoji character (e.g. "🏠")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  expenses  Expense[]
+}
+
 model Merchant {
   id        String    @id @default(uuid())
   name      String
@@ -60,7 +71,9 @@ model Expense {
   merchant      String // Nombre detectado (fallback)
   merchantId    String?
   merchantRel   Merchant? @relation(fields: [merchantId], references: [id])
-  category      String
+  category      String? // Legacy category name
+  categoryRel   Category? @relation(fields: [categoryId], references: [id])
+  categoryId    String?
   date          DateTime
   items         Json? // Detalle de items en formato JSON: [{name: string, price: number}]
   receiptNumber String? // Número de boleta/factura

@@ -1,31 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreditCardsService } from './credit-cards.service';
+import { CategoriesService } from './categories.service';
 
 import { PrismaService } from '../prisma.service';
 
-describe('CreditCardsService', () => {
-  let service: CreditCardsService;
+describe('CategoriesService', () => {
+  let service: CategoriesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        CreditCardsService,
+        CategoriesService,
         {
           provide: PrismaService,
           useValue: {
-            creditCard: {
+            category: {
               findMany: jest.fn(),
-              findUnique: jest.fn(),
-              create: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
             },
           },
         },
       ],
     }).compile();
 
-    service = module.get<CreditCardsService>(CreditCardsService);
+    service = module.get<CategoriesService>(CategoriesService);
   });
 
   it('should be defined', () => {

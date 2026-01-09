@@ -15,6 +15,7 @@ import { ChatModule } from './chat/chat.module';
 import { BotModule } from './bot/bot.module';
 import { OpenAIModule } from './openai/openai.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CreditCardsModule } from './credit-cards/credit-cards.module';
     BotModule,
     OpenAIModule,
     CreditCardsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

@@ -5,6 +5,7 @@ describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
 
   beforeEach(async () => {
+    process.env.JWT_SECRET = 'test-secret';
     const module: TestingModule = await Test.createTestingModule({
       providers: [JwtStrategy],
     }).compile();

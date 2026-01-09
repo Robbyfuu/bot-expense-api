@@ -21,7 +21,7 @@ async function bootstrap() {
     }),
   );
   const allowedOrigins: (string | RegExp)[] = [
-    /http:\/\/localhost:\d+/,
+    /https?:\/\/localhost:\d+/,
     /https:\/\/.*\.trycloudflare\.com/,
   ];
 
