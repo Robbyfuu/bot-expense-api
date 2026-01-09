@@ -1,14 +1,12 @@
-/* eslint-disable */
 import { Test, TestingModule } from '@nestjs/testing';
 import { BotProcessorService } from './bot.processor';
 import { PrismaService } from '../prisma.service';
 import { OpenAIService } from '../openai/openai.service';
 import { Logger } from '@nestjs/common';
+import { DteService } from '../dte/dte.service';
 
 describe('BotProcessorService', () => {
   let service: BotProcessorService;
-  let prisma: PrismaService;
-  let openAI: OpenAIService;
 
   const mockPrisma = {
     expense: {
@@ -27,11 +25,18 @@ describe('BotProcessorService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
     },
+    creditCard: {
+      findMany: jest.fn(),
+    },
   };
 
   const mockOpenAI = {
     processReceipt: jest.fn(),
     parseCorrection: jest.fn(),
+  };
+
+  const mockDte = {
+    decode: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -40,12 +45,11 @@ describe('BotProcessorService', () => {
         BotProcessorService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OpenAIService, useValue: mockOpenAI },
+        { provide: DteService, useValue: mockDte },
       ],
     }).compile();
 
     service = module.get<BotProcessorService>(BotProcessorService);
-    prisma = module.get<PrismaService>(PrismaService);
-    openAI = module.get<OpenAIService>(OpenAIService);
 
     // Silence logger
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});

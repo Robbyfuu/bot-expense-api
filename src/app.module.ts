@@ -16,6 +16,7 @@ import { BotModule } from './bot/bot.module';
 import { OpenAIModule } from './openai/openai.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { CategoriesModule } from './categories/categories.module';
+import { DteModule } from './dte/dte.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CategoriesModule } from './categories/categories.module';
     OpenAIModule,
     CreditCardsModule,
     CategoriesModule,
+    DteModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

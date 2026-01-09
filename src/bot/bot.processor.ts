@@ -2,6 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { OpenAIService } from '../openai/openai.service';
+import { DteService } from '../dte/dte.service';
 
 @Injectable()
 export class BotProcessorService {
@@ -10,16 +11,38 @@ export class BotProcessorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openAIService: OpenAIService,
+    private readonly dteService: DteService,
   ) {}
 
   async processImage(userId: string, imageBuffer: Buffer): Promise<string> {
     this.logger.log(`Processing image for user ${userId}`);
 
-    // Procesar con OpenAI
-    const expenseData = await this.openAIService.processReceipt(
-      imageBuffer,
-      'image/jpeg',
-    );
+    // 1. Try DTE (PDF417)
+    const dteData = await this.dteService.decode(imageBuffer);
+
+    let expenseData: any = {};
+
+    if (dteData) {
+      this.logger.log(
+        `DTE detected: Folio ${dteData.folio}, Amount ${dteData.montoTotal}`,
+      );
+      expenseData = {
+        merchant: '', // Will be resolved via RUT
+        rut: dteData.rutEmisor,
+        receipt_number: dteData.folio,
+        amount: dteData.montoTotal,
+        date: dteData.fecha, // YYYY-MM-DD
+        category: null,
+        payment_method: null,
+        items: [],
+      };
+    } else {
+      // 2. Fallback to OpenAI
+      expenseData = await this.openAIService.processReceipt(
+        imageBuffer,
+        'image/jpeg',
+      );
+    }
 
     // Resolver Merchant
     let merchantId: string | null = null;
