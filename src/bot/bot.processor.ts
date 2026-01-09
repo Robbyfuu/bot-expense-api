@@ -17,32 +17,19 @@ export class BotProcessorService {
   async processImage(userId: string, imageBuffer: Buffer): Promise<string> {
     this.logger.log(`Processing image for user ${userId}`);
 
-    // 1. Try DTE (PDF417)
-    const dteData = await this.dteService.decode(imageBuffer);
+    // TODO: PDF417 (DTE) scanning disabled - zxing-js has limitations on this barcode type
+    // Consider implementing a Python microservice with pyzbar for reliable PDF417 decoding
+    // See: /manual_muestras_impresas.pdf for SII DTE specifications
+    //
+    // Original code:
+    // const dteData = await this.dteService.decode(imageBuffer);
+    // if (dteData) { ... use dteData ... }
 
-    let expenseData: any = {};
-
-    if (dteData) {
-      this.logger.log(
-        `DTE detected: Folio ${dteData.folio}, Amount ${dteData.montoTotal}`,
-      );
-      expenseData = {
-        merchant: '', // Will be resolved via RUT
-        rut: dteData.rutEmisor,
-        receipt_number: dteData.folio,
-        amount: dteData.montoTotal,
-        date: dteData.fecha, // YYYY-MM-DD
-        category: null,
-        payment_method: null,
-        items: [],
-      };
-    } else {
-      // 2. Fallback to OpenAI
-      expenseData = await this.openAIService.processReceipt(
-        imageBuffer,
-        'image/jpeg',
-      );
-    }
+    // Process with OpenAI (current solution)
+    const expenseData = await this.openAIService.processReceipt(
+      imageBuffer,
+      'image/jpeg',
+    );
 
     // Resolver Merchant
     let merchantId: string | null = null;

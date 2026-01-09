@@ -1,0 +1,2 @@
+ignoredBuiltDependencies:
+  - '@barkoder/barcode-nodejs-scanner'
