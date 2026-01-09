@@ -18,6 +18,10 @@ export class WebAuthnVerifyDto {
 
   @IsOptional()
   clientExtensionResults?: any;
+
+  @IsString()
+  @IsOptional()
+  authenticatorAttachment?: string;
 }
 
 export class WebAuthnLoginVerifyDto {
@@ -42,4 +46,8 @@ export class WebAuthnLoginVerifyDto {
 
   @IsOptional()
   clientExtensionResults?: any;
+
+  @IsString()
+  @IsOptional()
+  authenticatorAttachment?: string;
 }
