@@ -32,14 +32,35 @@ export class DteService {
   async decode(imageBuffer: Buffer): Promise<DteData | null> {
     const rotations = [0, 90, 270];
 
+    // Pre-process image once: resize (max 1024px), grayscale, normalize
+    let preprocessedBuffer: Buffer;
+    try {
+      const metadata = await sharp(imageBuffer).metadata();
+      this.logger.debug(`Original image: ${metadata.width}x${metadata.height}`);
+
+      preprocessedBuffer = await sharp(imageBuffer)
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .grayscale()
+        .normalize()
+        .toBuffer();
+
+      const newMeta = await sharp(preprocessedBuffer).metadata();
+      this.logger.debug(
+        `Preprocessed image: ${newMeta.width}x${newMeta.height}`,
+      );
+    } catch (e) {
+      this.logger.error('Error preprocessing image', e);
+      return null;
+    }
+
     for (const angle of rotations) {
       try {
         this.logger.debug(
           `Attempting to decode PDF417 with rotation ${angle}°...`,
         );
 
-        // Preprocess image with sharp
-        const pipeline = sharp(imageBuffer);
+        // Apply rotation to preprocessed image
+        const pipeline = sharp(preprocessedBuffer);
 
         if (angle !== 0) {
           pipeline.rotate(angle);
