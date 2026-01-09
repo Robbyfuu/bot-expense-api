@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Expense" ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'CONFIRMED';

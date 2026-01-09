@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String       @id @default(uuid())
+  phoneNumber        String       @unique
+  name               String?
+  color              String?      @default("#000000")
+  otp                String? // Hashed OTP or Plaintext (for simplicity in MVP)
+  otpExpiresAt       DateTime?
+  twoFactorSecret    String? // Encrypted 2FA Secret
+  isTwoFactorEnabled Boolean      @default(false)
+  expenses           Expense[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  salary             Int? // Monthly salary in CLP
+  creditCards        CreditCard[]
+  refreshTokens      RefreshToken[]
+  authenticators     Authenticator[]
+  currentChallenge   String? // For WebAuthn
+}
+
+model CreditCard {
+  id          String    @id @default(uuid())
+  name        String    // e.g. "Visa Banco Falabella"
+  last4       String    // Last 4 digits
+  closingDay  Int       // Day of the month (1-31)
+  paymentDay  Int       // Day of the month (1-31)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  payments    Expense[]    @relation("CardPayment")
+  purchases   Expense[]    @relation("CardPurchase")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Merchant {
+  id        String    @id @default(uuid())
+  name      String
+  rut       String?   @unique
+  category  String? // Categoría por defecto para este comercio
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Expense {
+  id            String    @id @default(uuid())
+  amount        Int // Pesos Chilenos (CLP) sin decimales
+  merchant      String // Nombre detectado (fallback)
+  merchantId    String?
+  merchantRel   Merchant? @relation(fields: [merchantId], references: [id])
+  category      String
+  date          DateTime
+  items         Json? // Detalle de items en formato JSON: [{name: string, price: number}]
+  receiptNumber String? // Número de boleta/factura
+  status        String    @default("CONFIRMED") // PENDING, CONFIRMED, REJECTED
+  rawText       String? // Texto crudo extraído o descripción opcional
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  paymentForCardId String?
+  paymentForCard   CreditCard? @relation("CardPayment", fields: [paymentForCardId], references: [id])
+  paidWithCardId   String?
+  paidWithCard     CreditCard? @relation("CardPurchase", fields: [paidWithCardId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+}
+
+model Authenticator {
+  id                   String   @id @default(uuid())
+  credentialID         String   @unique
+  credentialPublicKey  String
+  counter              BigInt
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+}

@@ -1,0 +1,185 @@
+{
+  "root": {
+    "getHello": {
+      "request": {
+        "method": "GET",
+        "path": "/"
+      },
+      "response": "string"
+    }
+  },
+  "auth": {
+    "login": {
+      "request": {
+        "phoneNumber": "string (Start with country code, e.g., 569...)"
+      },
+      "response": {
+        "message": "OTP sent"
+      }
+    },
+    "verify": {
+      "request": {
+        "method": "POST",
+        "path": "/auth/verify",
+        "body": {
+          "phoneNumber": "string"
+        }
+      },
+      "response": {
+        "accessToken": "string"
+      }
+    },
+    "2fa": {
+      "generate": {
+        "request": {
+          "method": "POST",
+          "path": "/auth/2fa/generate",
+          "headers": { "Authorization": "Bearer <accessToken>" }
+        },
+        "response": {
+          "secret": "string (opt)",
+          "qrCode": "string (data:image/png;base64...)"
+        }
+      },
+      "enable": {
+        "request": {
+          "method": "POST",
+          "path": "/auth/2fa/enable",
+          "headers": { "Authorization": "Bearer <accessToken>" },
+          "body": { "token": "string (6 digits)" }
+        },
+        "response": { "message": "string" }
+      },
+      "authenticate": {
+        "request": {
+          "method": "POST",
+          "path": "/auth/2fa/authenticate",
+          "body": {
+            "phoneNumber": "string",
+            "token": "string (6 digits)"
+          }
+        },
+        "response": { "accessToken": "string" }
+      }
+    },
+    "me": {
+      "get": {
+        "request": {
+          "method": "GET",
+          "path": "/auth/me",
+          "headers": { "Authorization": "Bearer <accessToken>" }
+        },
+        "response": {
+          "id": "string",
+          "name": "string?",
+          "phoneNumber": "string",
+          "color": "string?",
+          "isTwoFactorEnabled": "boolean",
+          "createdAt": "string"
+        }
+      },
+      "update": {
+        "request": {
+          "method": "PATCH",
+          "path": "/auth/me",
+          "headers": { "Authorization": "Bearer <accessToken>" },
+          "body": {
+            "name": "string (opt)",
+            "color": "string (opt)"
+          }
+        },
+        "response": {
+          "id": "string",
+          "name": "string?",
+          "phoneNumber": "string",
+          "color": "string?",
+          "isTwoFactorEnabled": "boolean"
+        }
+      }
+    }
+  },
+  "expenses": {
+    "chart-data": {
+      "request": {
+        "method": "GET",
+        "path": "/expenses/chart-data?month=1&year=2025",
+        "headers": {
+          "Authorization": "Bearer <accessToken>"
+        },
+        "query": {
+          "month": "optional number (1-12)",
+          "year": "optional number (YYYY)"
+        }
+      },
+      "response": {
+        "chartData": [
+          {
+            "date": "string (YYYY-MM-DD)",
+            "[CategoryName]": "number (amount)"
+          }
+        ],
+        "chartConfig": {
+          "[CategoryName]": {
+            "label": "string",
+            "color": "string (hsl var)"
+          }
+        }
+      }
+    },
+    "list": {
+      "request": {
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer <accessToken>"
+        }
+      },
+      "response": [
+        {
+          "id": "string (UUID)",
+          "amount": "integer (CLP)",
+          "merchant": "string",
+          "category": "string | null",
+          "date": "string (ISO Date)",
+          "items": [
+            {
+              "name": "string",
+              "price": "number"
+            }
+          ],
+          "status": "string (PENDING | CONFIRMED | REJECTED)",
+          "rawText": "string | null",
+          "userId": "string (UUID)",
+          "createdAt": "string (ISO Date)",
+          "updatedAt": "string (ISO Date)",
+          "user": {
+            "name": "string | null",
+            "phoneNumber": "string"
+          }
+        }
+      ]
+    }
+  },
+  "websocket": {
+    "connection": {
+      "url": "ws://host/socket.io",
+      "transport": "websocket, polling",
+      "auth": { "token": "<accessToken>" }
+    },
+    "events": {
+      "sendMessage": {
+        "emit": { "text": "string" },
+        "listen": "receiveMessage"
+      },
+      "sendImage": {
+        "emit": { "image": "string (base64)" },
+        "listen": "receiveMessage"
+      },
+      "receiveMessage": {
+        "payload": {
+          "text": "string",
+          "fromBot": "boolean"
+        }
+      }
+    }
+  }
+}
