@@ -130,13 +130,24 @@ export class DteService {
       pipeline.rotate(angle);
     }
 
+    // Convert to RGB (not RGBA, not grayscale) - zxing expects RGB
     const { data, info } = await pipeline
-      .ensureAlpha()
+      .removeAlpha() // Ensure no alpha channel
+      .toColourspace('srgb') // Ensure RGB colorspace
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    // RGBLuminanceSource expects RGBA data, so we need to convert RGB to RGBA
+    const rgbaData = new Uint8ClampedArray(info.width * info.height * 4);
+    for (let i = 0, j = 0; i < data.length; i += 3, j += 4) {
+      rgbaData[j] = data[i]; // R
+      rgbaData[j + 1] = data[i + 1]; // G
+      rgbaData[j + 2] = data[i + 2]; // B
+      rgbaData[j + 3] = 255; // A (fully opaque)
+    }
+
     const luminanceSource = new RGBLuminanceSource(
-      new Uint8ClampedArray(data.buffer),
+      rgbaData,
       info.width,
       info.height,
     );
